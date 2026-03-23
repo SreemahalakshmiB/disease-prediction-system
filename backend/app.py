@@ -6,8 +6,6 @@ import sqlite3
 
 # ------------------ CREATE APP FIRST ------------------
 app = Flask(__name__, static_folder="build", static_url_path="")
-
-
 CORS(app)
 
 # ------------------ LOAD ML MODEL ------------------
@@ -131,16 +129,6 @@ def history():
 
 
 # ------------------ SERVE REACT ------------------
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
-
-
-# ------------------ RUN APP ------------------
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
