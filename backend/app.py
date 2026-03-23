@@ -8,7 +8,9 @@ app = Flask(__name__, static_folder="../frontend/build")
 CORS(app)
 
 # Load ML model
-model = joblib.load("model.pkl")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(BASE_DIR, "model.pkl")
+model = joblib.load(model_path)
 
 # SQLite DB
 DB_NAME = "disease_predictions.db"
