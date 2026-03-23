@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 
 function App() {
+  const API_URL = window.location.origin;
+
   const [formData, setFormData] = useState({
     age: "",
     bp: "",
@@ -25,7 +27,7 @@ function App() {
   // Fetch history from backend
   const fetchHistory = async () => {
     try {
-      const response = await fetch("https://disease-prediction-system-5bly.onrender.com/history");
+      const response = await fetch(`${API_URL}/history`);
       const data = await response.json();
       setHistory(data);
     } catch (error) {
@@ -55,7 +57,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("https://disease-prediction-system-5bly.onrender.com/predict", {
+      const response = await fetch(`${API_URL}/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
