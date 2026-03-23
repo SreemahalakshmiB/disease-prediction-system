@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 function App() {
-  const API_URL = window.location.origin;
+  const API_URL = "https://disease-prediction-system-5bly.onrender.com";
 
   const [formData, setFormData] = useState({
     age: "",
@@ -24,10 +24,11 @@ function App() {
     });
   };
 
-  // Fetch history from backend
+  // Fetch history
   const fetchHistory = async () => {
     try {
       const response = await fetch(`${API_URL}/history`);
+      if (!response.ok) throw new Error("History fetch failed");
       const data = await response.json();
       setHistory(data);
     } catch (error) {
@@ -35,7 +36,6 @@ function App() {
     }
   };
 
-  // Load history on page load
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -65,15 +65,16 @@ function App() {
         body: JSON.stringify(formData)
       });
 
+      if (!response.ok) throw new Error("Prediction failed");
+
       const data = await response.json();
       setResult(data.prediction);
       setRisk(data.risk);
 
-      // Refresh history after prediction
       fetchHistory();
 
     } catch (error) {
-      console.error(error);
+      console.error("Prediction error:", error);
       alert("Backend connection error");
     }
   };
@@ -116,28 +117,9 @@ function App() {
                 {risk}%
               </div>
             </div>
-
-            <div style={{ marginTop: "10px" }}>
-              {risk > 70 && (
-                <p style={{ color: "red" }}>
-                  ⚠️ Consult a cardiologist immediately.
-                </p>
-              )}
-              {risk > 40 && risk <= 70 && (
-                <p style={{ color: "orange" }}>
-                  ⚠️ Maintain proper diet and exercise.
-                </p>
-              )}
-              {risk <= 40 && (
-                <p style={{ color: "green" }}>
-                  ✅ Healthy condition. Continue good lifestyle.
-                </p>
-              )}
-            </div>
           </div>
         )}
 
-        {/* HISTORY TABLE */}
         {history.length > 0 && (
           <div style={{ marginTop: "25px" }}>
             <h2>Previous Predictions</h2>
