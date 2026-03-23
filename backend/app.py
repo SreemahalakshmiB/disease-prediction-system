@@ -4,23 +4,16 @@ import joblib
 import os
 import sqlite3
 
-from flask import send_from_directory
-
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
+# ------------------ CREATE APP FIRST ------------------
+app = Flask(__name__, static_folder="build", static_url_path="")
 CORS(app)
 
-# Load ML model
+# ------------------ LOAD ML MODEL ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(BASE_DIR, "model.pkl")
 model = joblib.load(model_path)
 
-# SQLite DB
+# ------------------ SQLITE DB ------------------
 DB_NAME = "disease_predictions.db"
 
 def init_db():
@@ -46,7 +39,6 @@ def init_db():
     conn.close()
 
 init_db()
-
 
 # ------------------ PREDICT ROUTE ------------------
 @app.route("/predict", methods=["POST"])
@@ -140,11 +132,12 @@ def history():
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    if path != "" and os.path.exists(app.static_folder + "/" + path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, "index.html")
 
 
+# ------------------ RUN APP ------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
