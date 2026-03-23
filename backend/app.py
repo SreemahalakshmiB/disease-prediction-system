@@ -4,7 +4,15 @@ import joblib
 import os
 import sqlite3
 
-app = Flask(__name__, static_folder="../frontend/build")
+from flask import send_from_directory
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
 CORS(app)
 
 # Load ML model
