@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function App() {
   const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ function App() {
 
   const [result, setResult] = useState("");
   const [risk, setRisk] = useState("");
+  const [history, setHistory] = useState([]);
 
   const handleChange = (e) => {
     setFormData({
@@ -20,6 +21,22 @@ function App() {
       [e.target.name]: e.target.value
     });
   };
+
+  // Fetch history from backend
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/history");
+      const data = await response.json();
+      setHistory(data);
+    } catch (error) {
+      console.error("History error:", error);
+    }
+  };
+
+  // Load history on page load
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,6 +66,10 @@ function App() {
       const data = await response.json();
       setResult(data.prediction);
       setRisk(data.risk);
+
+      // Refresh history after prediction
+      fetchHistory();
+
     } catch (error) {
       console.error(error);
       alert("Backend connection error");
@@ -80,7 +101,6 @@ function App() {
 
             <h3>Risk: {risk}%</h3>
 
-            {/* Risk Progress Bar */}
             <div style={styles.progressContainer}>
               <div
                 style={{
@@ -95,7 +115,6 @@ function App() {
               </div>
             </div>
 
-            {/* Doctor Advice */}
             <div style={{ marginTop: "10px" }}>
               {risk > 70 && (
                 <p style={{ color: "red" }}>
@@ -115,6 +134,37 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* HISTORY TABLE */}
+        {history.length > 0 && (
+          <div style={{ marginTop: "25px" }}>
+            <h2>Previous Predictions</h2>
+
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th>Age</th>
+                  <th>BP</th>
+                  <th>Chol</th>
+                  <th>Risk</th>
+                  <th>Prediction</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.age}</td>
+                    <td>{item.bp}</td>
+                    <td>{item.cholesterol}</td>
+                    <td>{item.risk}%</td>
+                    <td>{item.prediction}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -125,14 +175,15 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
-    background: "linear-gradient(to right, #4facfe, #00f2fe)"
+    minHeight: "100vh",
+    background: "linear-gradient(to right, #4facfe, #00f2fe)",
+    padding: "20px"
   },
   card: {
     background: "white",
     padding: "30px",
     borderRadius: "12px",
-    width: "320px",
+    width: "340px",
     textAlign: "center",
     boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
   },
@@ -158,6 +209,12 @@ const styles = {
     background: "#eee",
     borderRadius: "10px",
     marginTop: "10px"
+  },
+  table: {
+    width: "100%",
+    marginTop: "10px",
+    borderCollapse: "collapse",
+    fontSize: "12px"
   }
 };
 

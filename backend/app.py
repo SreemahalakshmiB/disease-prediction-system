@@ -2,26 +2,66 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
 import os
+import sqlite3
 
 app = Flask(__name__, static_folder="../frontend/build")
 CORS(app)
 
+# Load ML model
 model = joblib.load("model.pkl")
 
+# SQLite DB
+DB_NAME = "disease_predictions.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS predictions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        age REAL,
+        cp REAL,
+        bp REAL,
+        cholesterol REAL,
+        sugar REAL,
+        thalach REAL,
+        exang REAL,
+        prediction TEXT,
+        risk REAL
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
+
+# ------------------ PREDICT ROUTE ------------------
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
 
+    age = float(data['age'])
+    cp = float(data['cp'])
+    bp = float(data['bp'])
+    cholesterol = float(data['cholesterol'])
+    sugar = float(data['sugar'])
+    thalach = float(data['thalach'])
+    exang = float(data['exang'])
+
     features = [[
-        float(data['age']),
-        float(data['cp']),
-        float(data['bp']),
-        float(data['cholesterol']),
-        float(data['sugar']),
-        float(data['thalach']),
-        float(data['exang'])
+        age,
+        cp,
+        bp,
+        cholesterol,
+        sugar,
+        thalach,
+        exang
     ]]
 
+    # ML prediction
     proba = model.predict_proba(features)
     risk_percentage = round(proba[0][1] * 100, 2)
 
@@ -32,12 +72,61 @@ def predict():
     else:
         result = "High Risk"
 
+    # Save to SQLite
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO predictions
+        (age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        age, cp, bp, cholesterol, sugar, thalach, exang,
+        result, risk_percentage
+    ))
+
+    conn.commit()
+    conn.close()
+
     return jsonify({
         "prediction": result,
         "risk": risk_percentage
     })
 
-# Serve React static files
+
+# ------------------ HISTORY ROUTE ------------------
+@app.route("/history", methods=["GET"])
+def history():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk
+        FROM predictions
+        ORDER BY id DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    history_data = []
+    for row in rows:
+        history_data.append({
+            "age": row[0],
+            "cp": row[1],
+            "bp": row[2],
+            "cholesterol": row[3],
+            "sugar": row[4],
+            "thalach": row[5],
+            "exang": row[6],
+            "prediction": row[7],
+            "risk": row[8]
+        })
+
+    return jsonify(history_data)
+
+
+# ------------------ SERVE REACT ------------------
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
@@ -48,5 +137,4 @@ def serve(path):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=8000)
