@@ -11,6 +11,10 @@ CORS(app)
 # ------------------ LOAD ML MODEL ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(BASE_DIR, "model.pkl")
+
+if not os.path.exists(model_path):
+    model_path = "backend/model.pkl"
+
 model = joblib.load(model_path)
 
 # ------------------ SQLITE DB ------------------
@@ -43,7 +47,10 @@ init_db()
 # ------------------ PREDICT ROUTE ------------------
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.json
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No input data"}), 400
 
     age = float(data['age'])
     cp = float(data['cp'])
@@ -132,7 +139,9 @@ def history():
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+    full_path = os.path.join(app.static_folder, path)
+
+    if path != "" and os.path.exists(full_path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, "index.html")
