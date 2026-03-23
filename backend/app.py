@@ -6,7 +6,9 @@ import sqlite3
 
 # ------------------ CREATE APP FIRST ------------------
 app = Flask(__name__, static_folder="build", static_url_path="")
-CORS(app)
+
+
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # ------------------ LOAD ML MODEL ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
