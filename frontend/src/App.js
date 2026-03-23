@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 function App() {
-  const API_URL = "https://disease-prediction-system-5bly.onrender.com";
+  const API_URL = "";   // <-- FIXED HERE
 
   const [formData, setFormData] = useState({
     age: "",
@@ -24,7 +24,6 @@ function App() {
     });
   };
 
-  // Fetch history
   const fetchHistory = async () => {
     try {
       const response = await fetch(`${API_URL}/history`);
