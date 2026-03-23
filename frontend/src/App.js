@@ -25,7 +25,7 @@ function App() {
   // Fetch history from backend
   const fetchHistory = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/history");
+      const response = await fetch("https://disease-prediction-system-5bly.onrender.com/history");
       const data = await response.json();
       setHistory(data);
     } catch (error) {
@@ -55,7 +55,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/predict", {
+      const response = await fetch("https://disease-prediction-system-5bly.onrender.com/predict", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
