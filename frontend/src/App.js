@@ -82,7 +82,7 @@ function App() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h1>Heart disease prediction</h1>
-        <h1>Developed by Bathini Sree Mahalakshmi</h1>
+        
 
         <form onSubmit={handleSubmit}>
           <input style={styles.input} name="age" placeholder="Age" onChange={handleChange} />
