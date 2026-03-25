@@ -202,7 +202,7 @@ const styles = {
     marginTop: "10px",
     borderCollapse: "collapse",
     fontSize: "12px"
-  }
+  },
   footer: {
   marginTop: "20px",
   fontSize: "13px",
