@@ -81,6 +81,7 @@ function App() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
+        <h1>Heart disease prediction</h1>
         <h1>Developed by Bathini Sree Mahalakshmi</h1>
 
         <form onSubmit={handleSubmit}>
@@ -149,6 +150,9 @@ function App() {
         )}
 
       </div>
+      <footer style={styles.footer}>
+  Developed by Bathini Sree Mahalakshmi
+</footer>
     </div>
   );
 }
@@ -199,6 +203,12 @@ const styles = {
     borderCollapse: "collapse",
     fontSize: "12px"
   }
+  footer: {
+  marginTop: "20px",
+  fontSize: "13px",
+  color: "#555",
+  textAlign: "center"
+}
 };
 
 export default App;
