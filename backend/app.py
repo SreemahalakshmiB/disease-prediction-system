@@ -3,13 +3,14 @@ from flask_cors import CORS
 import joblib
 import os
 import sqlite3
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BUILD_DIR = os.path.join(BASE_DIR, "build")
 # ------------------ CREATE APP FIRST ------------------
 app = Flask(__name__, static_folder="build", static_url_path="")
 CORS(app)
 
 # ------------------ LOAD ML MODEL ------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 model_path = os.path.join(BASE_DIR, "model.pkl")
 
 if not os.path.exists(model_path):
