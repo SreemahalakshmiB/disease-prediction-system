@@ -59,79 +59,90 @@ init_db()
 # ------------------ PREDICT ROUTE ------------------
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        print("Received data:", data)
 
-    if not data:
-        return jsonify({"error": "No input data"}), 400
+        if not data:
+            return jsonify({"error": "No input data"}), 400
 
-    age = float(data['age'])
-    cp = float(data['cp'])
-    bp = float(data['bp'])
-    cholesterol = float(data['cholesterol'])
-    sugar = float(data['sugar'])
-    thalach = float(data['thalach'])
-    exang = float(data['exang'])
+        age = float(data.get('age', 0))
+        cp = float(data.get('cp', 0))
+        bp = float(data.get('bp', 0))
+        cholesterol = float(data.get('cholesterol', 0))
+        sugar = float(data.get('sugar', 0))
+        thalach = float(data.get('thalach', 0))
+        exang = float(data.get('exang', 0))
 
-    features = [[age, cp, bp, cholesterol, sugar, thalach, exang]]
+        features = [[age, cp, bp, cholesterol, sugar, thalach, exang]]
 
-    proba = model.predict_proba(features)
-    risk_percentage = round(proba[0][1] * 100, 2)
+        proba = model.predict_proba(features)
+        risk_percentage = round(proba[0][1] * 100, 2)
 
-    prediction = model.predict(features)
+        prediction = model.predict(features)
 
-    result = "High Risk" if prediction[0] == 1 else "Low Risk"
+        result = "High Risk" if prediction[0] == 1 else "Low Risk"
 
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO predictions
-        (age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        age, cp, bp, cholesterol, sugar, thalach, exang,
-        result, risk_percentage
-    ))
+        cursor.execute("""
+            INSERT INTO predictions
+            (age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            age, cp, bp, cholesterol, sugar, thalach, exang,
+            result, risk_percentage
+        ))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return jsonify({
-        "prediction": result,
-        "risk": risk_percentage
-    })
+        return jsonify({
+            "prediction": result,
+            "risk": risk_percentage
+        })
+
+    except Exception as e:
+        print("Prediction error:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 # ------------------ HISTORY ROUTE ------------------
 @app.route("/history", methods=["GET"])
 def history():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk
-        FROM predictions
-        ORDER BY id DESC
-    """)
+        cursor.execute("""
+            SELECT age, cp, bp, cholesterol, sugar, thalach, exang, prediction, risk
+            FROM predictions
+            ORDER BY id DESC
+        """)
 
-    rows = cursor.fetchall()
-    conn.close()
+        rows = cursor.fetchall()
+        conn.close()
 
-    history_data = []
-    for row in rows:
-        history_data.append({
-            "age": row[0],
-            "cp": row[1],
-            "bp": row[2],
-            "cholesterol": row[3],
-            "sugar": row[4],
-            "thalach": row[5],
-            "exang": row[6],
-            "prediction": row[7],
-            "risk": row[8]
-        })
+        history_data = []
+        for row in rows:
+            history_data.append({
+                "age": row[0],
+                "cp": row[1],
+                "bp": row[2],
+                "cholesterol": row[3],
+                "sugar": row[4],
+                "thalach": row[5],
+                "exang": row[6],
+                "prediction": row[7],
+                "risk": row[8]
+            })
 
-    return jsonify(history_data)
+        return jsonify(history_data)
+
+    except Exception as e:
+        print("History error:", str(e))
+        return jsonify([])
 
 
 # ------------------ SERVE REACT ------------------
