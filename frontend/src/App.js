@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 function App() {
-  const API_URL = "";   // <-- FIXED HERE
+     // <-- FIXED HERE
 
   const [formData, setFormData] = useState({
     age: "",
@@ -26,7 +26,7 @@ function App() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch(`${API_URL}/history`);
+      const response = await fetch(`/history`);
       if (!response.ok) throw new Error("History fetch failed");
       const data = await response.json();
       setHistory(data);
@@ -56,7 +56,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/predict`, {
+      const response = await fetch(`/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
