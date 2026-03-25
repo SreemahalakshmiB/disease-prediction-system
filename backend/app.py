@@ -3,20 +3,31 @@ from flask_cors import CORS
 import joblib
 import os
 import sqlite3
+
+# ------------------ PATHS ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BUILD_DIR = os.path.join(BASE_DIR, "build")
-# ------------------ CREATE APP FIRST ------------------
-app = Flask(__name__, static_folder="build", static_url_path="")
+
+# ------------------ CREATE APP ------------------
+app = Flask(__name__, static_folder=BUILD_DIR, static_url_path="")
 CORS(app)
 
 # ------------------ LOAD ML MODEL ------------------
+possible_paths = [
+    os.path.join(BASE_DIR, "model.pkl"),
+    "backend/model.pkl",
+    "model.pkl"
+]
 
-model_path = os.path.join(BASE_DIR, "model.pkl")
+model = None
+for path in possible_paths:
+    if os.path.exists(path):
+        model = joblib.load(path)
+        print("Model loaded from:", path)
+        break
 
-if not os.path.exists(model_path):
-    model_path = "backend/model.pkl"
-
-model = joblib.load(model_path)
+if model is None:
+    raise FileNotFoundError("model.pkl not found")
 
 # ------------------ SQLITE DB ------------------
 DB_NAME = "disease_predictions.db"
@@ -61,28 +72,15 @@ def predict():
     thalach = float(data['thalach'])
     exang = float(data['exang'])
 
-    features = [[
-        age,
-        cp,
-        bp,
-        cholesterol,
-        sugar,
-        thalach,
-        exang
-    ]]
+    features = [[age, cp, bp, cholesterol, sugar, thalach, exang]]
 
-    # ML prediction
     proba = model.predict_proba(features)
     risk_percentage = round(proba[0][1] * 100, 2)
 
     prediction = model.predict(features)
 
-    if prediction[0] == 0:
-        result = "Low Risk"
-    else:
-        result = "High Risk"
+    result = "High Risk" if prediction[0] == 1 else "Low Risk"
 
-    # Save to SQLite
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
@@ -140,9 +138,13 @@ def history():
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    full_path = os.path.join(app.static_folder, path)
-
-    if path != "" and os.path.exists(full_path):
-        return send_from_directory(app.static_folder, path)
+    if path != "" and os.path.exists(os.path.join(BUILD_DIR, path)):
+        return send_from_directory(BUILD_DIR, path)
     else:
-        return send_from_directory(app.static_folder, "index.html")
+        return send_from_directory(BUILD_DIR, "index.html")
+
+
+# ------------------ RUN APP ------------------
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
